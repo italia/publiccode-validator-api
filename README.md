@@ -67,7 +67,7 @@ If you want to know more about how to add new fields, check out [CONTRIBUTING.md
 
 ## Maintainers
 
-This software is maintained by the [Developers Italia](https://developers.italia.it/) team.
+This software is maintained by community maintainers.
 
 ## License
 
