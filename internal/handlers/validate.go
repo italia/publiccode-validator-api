@@ -43,6 +43,8 @@ func (vh *PubliccodeymlValidatorHandler) Query(ctx *fiber.Ctx) error {
 
 	reader := bytes.NewReader(ctx.Body())
 
+	results := make(publiccodeParser.ValidationResults, 0)
+
 	// parsed, err = parser.Parse(repository.FileRawURL)
 	_, err := vh.parser.ParseStream(reader)
 	if err != nil {
@@ -52,12 +54,11 @@ func (vh *PubliccodeymlValidatorHandler) Query(ctx *fiber.Ctx) error {
 			for _, res := range validationResults {
 				if errors.As(res, &validationError) {
 					valid = false
-
-					break
 				}
+				results = append(results, res)
 			}
 		}
 	}
 
-	return ctx.JSON(fiber.Map{"valid": valid})
+	return ctx.JSON(fiber.Map{"valid": valid, "results": results})
 }
