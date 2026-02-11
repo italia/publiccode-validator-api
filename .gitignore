@@ -1,2 +1,7 @@
-app.log
-publiccode-validator
+dist/
+tmp/
+.idea/
+.vscode
+
+# Compiled binary
+/publiccode-validator-api

@@ -1,297 +1,149 @@
 package main
 
 import (
-	"encoding/json"
-	"errors"
-	"io/ioutil"
-	"net/http"
-	"regexp"
-	"runtime/debug"
-	"strconv"
+	"log"
+	"os"
+	"time"
 
-	log "github.com/sirupsen/logrus"
-
-	"github.com/ghodss/yaml"
-	"github.com/gorilla/mux"
-	publiccode "github.com/italia/publiccode-parser-go"
-	"github.com/italia/publiccode-validator/apiv1"
-	"github.com/italia/publiccode-validator/utils"
+	"github.com/ansrivas/fiberprometheus/v2"
+	"github.com/caarlos0/env/v6"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cache"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
+	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/italia/developers-italia-api/internal/common"
+	"github.com/italia/developers-italia-api/internal/database"
+	"github.com/italia/developers-italia-api/internal/handlers"
+	"github.com/italia/developers-italia-api/internal/jsondecoder"
+	"github.com/italia/developers-italia-api/internal/middleware"
+	"github.com/italia/developers-italia-api/internal/models"
+	"github.com/italia/developers-italia-api/internal/webhooks"
+	"gorm.io/gorm"
 )
 
-var (
-	version string
-	date    string
-)
-
-// App localize type
-type App utils.App
-
-func init() {
-	if version == "" {
-		version = "devel"
-		if info, ok := debug.ReadBuildInfo(); ok {
-			version = info.Main.Version
-		}
-	}
-	if date == "" {
-		date = "(latest)"
-	}
-	log.Infof("version %s compiled %s\n", version, date)
-}
-
-// main server start
 func main() {
-	app := App{}
-	app.Port = "5000"
-	app.DisableNetwork = false
-	app.initializeRouters()
-
-	// server run here because of tests
-	// https://github.com/gorilla/mux#testing-handlers
-	log.Infof("server is starting at port %s", app.Port)
-	log.Fatal(http.ListenAndServe(":"+app.Port, app.Router))
+	app := Setup()
+	if err := app.Listen(":3000"); err != nil {
+		log.Fatal(err)
+	}
 }
 
-func (app *App) initializeRouters() {
-	app.Router = mux.NewRouter()
-	var api = app.Router.PathPrefix("/api").Subrouter()
-	var api1 = api.PathPrefix("/v1").Subrouter()
+func Setup() *fiber.App {
+	if err := env.Parse(&common.EnvironmentConfig); err != nil {
+		panic(err)
+	}
 
-	// v0
-	app.Router.
-		HandleFunc("/pc/validate", app.validateParam).
-		Methods("POST", "OPTIONS").
-		Queries("disableNetwork", "{disableNetwork}")
-
-	app.Router.
-		HandleFunc("/pc/validate", app.validate).
-		Methods("POST", "OPTIONS")
-
-	app.Router.
-		HandleFunc("/pc/validateURL", app.validateRemoteURL).
-		Methods("POST", "OPTIONS").
-		Queries("url", "{url}")
-
-	// v1
-	api1.
-		HandleFunc("/validate", apiv1.ValidateParam).
-		Methods("POST", "OPTIONS").
-		Queries("disableNetwork", "{disableNetwork}")
-
-	api1.
-		HandleFunc("/validate", apiv1.Validate).
-		Methods("POST", "OPTIONS")
-
-	api1.
-		HandleFunc("/validateURL", apiv1.ValidateRemoteURL).
-		Methods("POST", "OPTIONS").
-		Queries("url", "{url}")
-}
-
-// parse returns new parsed and validated buffer and errors if any
-func (app *App) parse(b []byte) ([]byte, error, error) {
-	url, err := utils.GetURLFromYMLBuffer(b)
+	gormDB, err := database.NewDatabase(common.EnvironmentConfig.Database)
 	if err != nil {
-		// this error should not be blocking because it just means
-		// that no url is inside the request body.
-		// one case for that: partial validation during editing
-		log.Warnf("url not found in body (useful to get RemoteBaseURL): %s", err)
-	}
-	p := publiccode.NewParser()
-	p.DisableNetwork = app.DisableNetwork
-
-	if url != nil {
-		p.DisableNetwork = app.DisableNetwork
-		p.RemoteBaseURL = utils.GetRawURL(url)
-	}
-	log.Debugf("parse() called with disableNetwork: %v, and remoteBaseUrl: %s", p.DisableNetwork, p.RemoteBaseURL)
-	errParse := p.Parse(b)
-	pc, err := p.ToYAML()
-
-	// hack to reset global vars to default values
-	app.DisableNetwork = false
-	return pc, errParse, err
-}
-
-func (app *App) parseRemoteURL(urlString string) ([]byte, error, error) {
-	log.Infof("called parseRemoteURL() url: %s", urlString)
-	p := publiccode.NewParser()
-	urlString, err := utils.GetRawFile(urlString)
-	if err != nil {
-		return nil, nil, err
-	}
-	errParse := p.ParseRemoteFile(urlString)
-	pc, err := p.ToYAML()
-
-	return pc, errParse, err
-}
-
-func promptError(err error, w http.ResponseWriter,
-	httpStatus int, mess string) {
-
-	log.Errorf(mess+": %v", err)
-
-	message := utils.Message{
-		Status:  httpStatus,
-		Message: mess,
-		Error:   err.Error(),
-	}
-	log.Debugf("message: %v", message)
-	w.Header().Set("Content-type", "application/json")
-	w.WriteHeader(message.Status)
-	json.NewEncoder(w).Encode(message)
-}
-
-func promptValidationErrors(err error, w http.ResponseWriter,
-	httpStatus int, mess string) {
-
-	log.Errorf(mess+": %v", err)
-
-	message := utils.Message{
-		Status:          httpStatus,
-		Message:         mess,
-		ValidationError: utils.ErrorsToValidationErrors(err),
+		panic(err)
 	}
 
-	w.Header().Set("Content-type", "application/json")
-	w.WriteHeader(message.Status)
-	messageJSON, _ := json.Marshal(message)
-	w.Write(messageJSON)
-}
-
-func (app *App) validateRemoteURL(w http.ResponseWriter, r *http.Request) {
-	log.Info("called validateFromURL()")
-	utils.SetupResponse(&w, r)
-	if (*r).Method == "OPTIONS" {
-		return
-	}
-	// Getting vars from parameters
-	vars := mux.Vars(r)
-	urlString := vars["url"]
-	if urlString == "" {
-		promptError(errors.New("Not found"), w, http.StatusNotFound, "URL error")
-		return
-	}
-
-	// parsing
-	pc, errParse, errConverting := app.parseRemoteURL(urlString)
-
-	if errConverting != nil {
-		promptError(errConverting, w, http.StatusBadRequest, "Error converting")
-		return
-	}
-	if errParse != nil {
-		if match, _ := regexp.MatchString(`404`, errParse.Error()); match {
-			promptError(errors.New("Not found"), w, http.StatusNotFound, "URL error")
-			return
+	// Setup a goroutine acting as a worker for events sent to the
+	// EventChan channel.
+	//
+	// It dispatches the webhooks related to the event that occurred
+	// (es. Publisher creation, Software delete, etc.)
+	go func() {
+		for event := range models.EventChan {
+			if err := webhooks.DispatchWebhooks(event, gormDB); err != nil {
+				log.Println(err)
+			}
 		}
-		promptValidationErrors(errParse, w, http.StatusUnprocessableEntity, "Validation Errors")
-	} else {
-		// set response CT based on client accept header
-		// and return respectively content
-		if r.Header.Get("Accept") == "application/json" {
-			w.Header().Set("Content-type", "application/json")
-			w.Write(utils.Yaml2json(pc))
-			return
-		}
-		// default choice
-		w.Header().Set("Content-type", "application/x-yaml")
-		w.Write(pc)
+	}()
+
+	app := fiber.New(fiber.Config{
+		ErrorHandler: common.CustomErrorHandler,
+		// Fiber doesn't set DisallowUnknownFields by default
+		// (https://github.com/gofiber/fiber/issues/2601)
+		JSONDecoder: jsondecoder.UnmarshalDisallowUnknownFields,
+	})
+
+	// Automatically recover panics in handlers
+	app.Use(recover.New())
+
+	// Use Fiber Rate API Limiter
+	if !common.EnvironmentConfig.IsTest() && common.EnvironmentConfig.MaxRequests != 0 {
+		app.Use(limiter.New(limiter.Config{
+			Max:               common.EnvironmentConfig.MaxRequests,
+			LimiterMiddleware: limiter.SlidingWindow{},
+			KeyGenerator: func(ctx *fiber.Ctx) string {
+				return ctx.IP() + ctx.Get(fiber.HeaderXForwardedFor, "")
+			},
+		}))
 	}
+
+	app.Use(cache.New(cache.Config{
+		Next: func(ctx *fiber.Ctx) bool {
+			// Don't cache /status
+			return ctx.Route().Path == "/v1/status"
+		},
+		Methods:      []string{fiber.MethodGet, fiber.MethodHead},
+		CacheControl: true,
+		Expiration:   10 * time.Second, //nolint:gomnd
+		KeyGenerator: func(ctx *fiber.Ctx) string {
+			return ctx.Path() + string(ctx.Context().QueryArgs().QueryString())
+		},
+	}))
+
+	if common.EnvironmentConfig.PasetoKey == nil {
+		log.Printf("PASETO_KEY not set, API will run in read-only mode")
+
+		common.EnvironmentConfig.PasetoKey = middleware.NewRandomPasetoKey()
+	}
+
+	prometheus := fiberprometheus.New(os.Args[0])
+	prometheus.RegisterAt(app, "/metrics")
+	app.Use(prometheus.Middleware)
+
+	app.Use(middleware.NewPasetoMiddleware(common.EnvironmentConfig))
+
+	setupHandlers(app, gormDB)
+
+	return app
 }
 
-// validateParam will take a query parameter to enable
-// or disable network layer on parsing process
-// and then call normal validation
-func (app *App) validateParam(w http.ResponseWriter, r *http.Request) {
-	log.Info("called validateParam()")
-	utils.SetupResponse(&w, r)
-	if (*r).Method == "OPTIONS" {
-		return
-	}
-	// Getting vars from parameters
-	vars := mux.Vars(r)
-	disableNetwork, err := strconv.ParseBool(vars["disableNetwork"])
-	app.DisableNetwork = disableNetwork
+func setupHandlers(app *fiber.App, gormDB *gorm.DB) {
+	publisherHandler := handlers.NewPublisher(gormDB)
+	softwareHandler := handlers.NewSoftware(gormDB)
+	statusHandler := handlers.NewStatus(gormDB)
+	logHandler := handlers.NewLog(gormDB)
+	publisherWebhookHandler := handlers.NewWebhook[models.Publisher](gormDB)
+	softwareWebhookHandler := handlers.NewWebhook[models.Software](gormDB)
 
-	if err != nil {
-		app.DisableNetwork = false
-		log.Info("var disableNetwork not set, default to true")
-	}
+	//nolint:varnamelen
+	v1 := app.Group("/v1")
 
-	app.validate(w, r)
-}
+	v1.Get("/publishers/webhooks", publisherWebhookHandler.GetResourceWebhooks)
+	v1.Post("/publishers/webhooks", publisherWebhookHandler.PostResourceWebhook)
+	v1.Get("/publishers/:id/webhooks", publisherWebhookHandler.GetSingleResourceWebhooks)
+	v1.Post("/publishers/:id/webhooks", publisherWebhookHandler.PostSingleResourceWebhook)
+	v1.Get("/publishers", publisherHandler.GetPublishers)
+	v1.Get("/publishers/:id", publisherHandler.GetPublisher)
+	v1.Post("/publishers", publisherHandler.PostPublisher)
+	v1.Patch("/publishers/:id", publisherHandler.PatchPublisher)
+	v1.Delete("/publishers/:id", publisherHandler.DeletePublisher)
 
-// validate returns a YML or JSON onbject validated and upgraded
-// to latest PublicCode version specs.
-// It accepts both format as input YML|JSON
-func (app *App) validate(w http.ResponseWriter, r *http.Request) {
-	log.Info("called validate()")
-	utils.SetupResponse(&w, r)
-	if (*r).Method == "OPTIONS" {
-		return
-	}
+	v1.Get("/software/webhooks", softwareWebhookHandler.GetResourceWebhooks)
+	v1.Post("/software/webhooks", softwareWebhookHandler.PostResourceWebhook)
+	v1.Get("/software/:id/webhooks", softwareWebhookHandler.GetSingleResourceWebhooks)
+	v1.Post("/software/:id/webhooks", softwareWebhookHandler.PostSingleResourceWebhook)
+	v1.Get("/software", softwareHandler.GetAllSoftware)
+	v1.Get("/software/:id", softwareHandler.GetSoftware)
+	v1.Post("/software", softwareHandler.PostSoftware)
+	v1.Patch("/software/:id", softwareHandler.PatchSoftware)
+	v1.Delete("/software/:id", softwareHandler.DeleteSoftware)
 
-	if r.Body == nil {
-		log.Info("empty payload")
-		return
-	}
+	v1.Get("/logs", logHandler.GetLogs)
+	v1.Get("/logs/:id<guid>", logHandler.GetLog)
+	v1.Post("/logs", logHandler.PostLog)
+	v1.Patch("/logs/:id<guid>", logHandler.PatchLog)
+	v1.Delete("/logs/:id<guid>", logHandler.DeleteLog)
+	v1.Get("/software/:id/logs", logHandler.GetSoftwareLogs)
+	v1.Post("/software/:id/logs", logHandler.PostSoftwareLog)
 
-	// Closing body after operations
-	defer r.Body.Close()
-	// reading request
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		promptError(err, w, http.StatusBadRequest, "Error reading body")
-		return
-	}
+	v1.Get("/status", statusHandler.GetStatus)
 
-	// these functions take as argument a request body
-	// convert content in YAML format if needed
-	// and return a bytes array needed from Parser
-	// to validate correctly
-	// here, based on content-type header must convert
-	// [yaml/json] content into []byte
-	var m []byte
-
-	if r.Header.Get("Content-Type") == "application/json" {
-		//converting to YML
-		m, err = yaml.JSONToYAML(body)
-		if err != nil {
-			promptError(err, w, http.StatusBadRequest, "Conversion to json ko")
-			return
-		}
-	} else {
-		m = body
-	}
-
-	// parsing
-	pc, errParse, errConverting := app.parse(m)
-
-	if errConverting != nil {
-		promptError(errConverting, w, http.StatusBadRequest, "Error converting")
-		return
-	}
-	if errParse != nil {
-		log.Debugf("Validation Errors: %s", errParse)
-
-		// consider switch to promptError()
-		w.Header().Set("Content-type", "application/json")
-		w.WriteHeader(http.StatusUnprocessableEntity)
-
-		json, _ := json.Marshal(errParse)
-		w.Write(json)
-		// promptError(errParse, w, http.StatusUnprocessableEntity, "Error parsing")
-	} else {
-		// set response CT based on client accept header
-		// and return respectively content
-		if r.Header.Get("Accept") == "application/json" {
-			w.Header().Set("Content-type", "application/json")
-			w.Write(utils.Yaml2json(pc))
-			return
-		}
-		// default choice
-		w.Header().Set("Content-type", "application/x-yaml")
-		w.Write(pc)
-	}
+	v1.Get("/webhooks/:id<guid>", publisherWebhookHandler.GetWebhook)
+	v1.Patch("/webhooks/:id<guid>", publisherWebhookHandler.PatchWebhook)
+	v1.Delete("/webhooks/:id<guid>", publisherWebhookHandler.DeleteWebhook)
 }

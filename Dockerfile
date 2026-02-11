@@ -1,22 +1,20 @@
-# Accept the Go version for the image to be set as a build argument.
-ARG GO_VERSION=1.15-alpine
+#
+# This is for local development only.
+# See Dockerfile.goreleaser for the image published on release or staging.
+#
 
-FROM golang:${GO_VERSION}
+FROM golang:1.24 as base
 
-ENV BIN /usr/local/bin/publiccode-validator
+SHELL ["/bin/bash", "-o", "pipefail", "-euxc"]
 
-WORKDIR /go/src
+WORKDIR /opt/app/api
 
-COPY ./ .
-COPY .git/ .
+ENV AIR_SHA256 3842f9a86304e06f68f61555ce303cb426b450a7be8ee14020cbd149a68008d0
 
-RUN apk add git
+RUN export GO_BINPATH="$(go env GOPATH)/bin" \
+    && echo $GO_BINPATH \
+    && curl -sSfL -o "$GO_BINPATH/air" https://github.com/cosmtrek/air/releases/download/v1.40.2/air_1.40.2_linux_amd64 \
+    && echo "$AIR_SHA256 $GO_BINPATH/air" | sha256sum --check --strict \
+    && chmod +x "$GO_BINPATH/air"
 
-RUN go get -d
-
-RUN go build -ldflags \
-    "-X main.version=$(git describe --abbrev=0 --tags) -X main.date=$(date --iso-8601=second)" \
-    -o $BIN \
-    && chmod +x $BIN
-
-CMD ["sh","-c","${BIN}"]
+CMD ["air"]

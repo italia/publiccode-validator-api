@@ -1,6 +1,10 @@
-FROM alpine
+#
+# This is the Docker image that gets published to GitHub.
+#
+# Goreleaser takes care of building the binary.
+#
+FROM alpine:3
 
-COPY publiccode-validator /
+COPY publiccode-validator-api /usr/local/bin/publiccode-validator-api
 
-# Run the compiled binary.
-CMD ["/publiccode-validator"]
+ENTRYPOINT ["/usr/local/bin/publiccode-validator-api"]
