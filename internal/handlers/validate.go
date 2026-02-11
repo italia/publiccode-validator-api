@@ -55,6 +55,7 @@ func (vh *PubliccodeymlValidatorHandler) Query(ctx *fiber.Ctx) error {
 				if errors.As(res, &validationError) {
 					valid = false
 				}
+
 				results = append(results, res)
 			}
 		}
