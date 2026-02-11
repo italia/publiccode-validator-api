@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"github.com/italia/developers-italia-api/internal/jsondecoder"
+	"github.com/italia/publiccode-validator-api/internal/jsondecoder"
 )
 
 const (

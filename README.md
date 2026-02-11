@@ -17,20 +17,13 @@ See related project for details: [publiccode-parser-go](https://github.com/itali
 The repository also contains a tool used to validate publiccode.yml files locally.
 
 ```bash
-go run src/main.go
+go run main.go
 
-curl -XPOST localhost:5000/pc/validate -d '{
-  "localisation": {
-    "localisationReady": false
-  },
-  "description": {
-    "it": {
-      "shortDescription": "test"
-    }
-  },
-  "publiccodeYmlVersion": "0.2"
-}'
+curl -X POST "http://localhost:3000/v1/validate"
+  -H "Content-Type: application/x-yaml"
+  --data-binary "@./publiccode.yml"
 ```
+
 ## Docker support
 
 The repository has a *Dockerfile*, used to also build the production image, and a *docker-compose.yml* file to facilitate the local deployment.
