@@ -1,9 +1,8 @@
 package handlers
 
 import (
+	"bytes"
 	"errors"
-	"fmt"
-	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	publiccodeParser "github.com/italia/publiccode-parser-go/v5"
@@ -16,7 +15,7 @@ type PubliccodeymlValidatorHandler struct {
 func NewPubliccodeymlValidatorHandler() *PubliccodeymlValidatorHandler {
 	parser, err := publiccodeParser.NewDefaultParser()
 	if err != nil {
-		panic(fmt.Sprintf("can't create a publiccode.yml parser: %s", err.Error()))
+		panic("can't create a publiccode.yml parser: " + err.Error())
 	}
 
 	return &PubliccodeymlValidatorHandler{parser: parser}
@@ -42,10 +41,7 @@ func (vh *PubliccodeymlValidatorHandler) Query(ctx *fiber.Ctx) error {
 		})
 	}
 
-	// Body() ritorna []byte; lo wrappiamo in io.Reader
-	reader := strings.NewReader(string(ctx.Body()))
-	// alternativa più efficiente:
-	// reader := bytes.NewReader(c.Body())
+	reader := bytes.NewReader(ctx.Body())
 
 	// parsed, err = parser.Parse(repository.FileRawURL)
 	_, err := vh.parser.ParseStream(reader)

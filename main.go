@@ -65,7 +65,6 @@ func Setup() *fiber.App {
 func setupHandlers(app *fiber.App) {
 	validateHandler := handlers.NewPubliccodeymlValidatorHandler()
 
-	//nolint:varnamelen
 	v1 := app.Group("/v1")
 
 	v1.Add("QUERY", "/validate", validateHandler.Query)
