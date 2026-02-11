@@ -23,7 +23,7 @@ jobs:
           fetch-depth: 0
       - # For TagBody, TagSubject or TagContents fields in goreleaser's templates
         run: git fetch --force --tags
-      - run: docker login ghcr.io -u docker --password-stdin
+      - run: docker login ghcr.io -u docker
       - uses: goreleaser/goreleaser-action@v6
         with:
           version: v1.9.2
