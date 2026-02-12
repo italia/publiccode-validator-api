@@ -59,6 +59,24 @@ curl -X QUERY "http://localhost:3000/v1/validate" -H "Content-Type: application/
 }
 ```
 
+### Example error response
+
+All error responses are returned using the `application/problem+json` media type,
+in accordance with [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457.html).
+
+```http
+HTTP/1.1 400 Bad Request
+Content-Type: application/problem+json
+```
+
+```json
+{
+  "title": "empty body",
+  "detail": "need a body to validate",
+  "status": 400
+}
+```
+
 ## Contributing
 
 Contributing is always appreciated, see [CONTRIBUTING.md](CONTRIBUTING.md).
