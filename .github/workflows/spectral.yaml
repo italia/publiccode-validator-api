@@ -1,8 +1,10 @@
 on:
   push:
     branches: [main]
+    paths: publiccode-validator-api.oas.yaml
   pull_request:
     branches: [main]
+    paths: publiccode-validator-api.oas.yaml
 
 permissions:
   checks: write
