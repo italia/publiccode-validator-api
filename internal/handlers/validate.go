@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	publiccodeParser "github.com/italia/publiccode-parser-go/v5"
+	"github.com/italia/publiccode-validator-api/internal/common"
 )
 
 type PubliccodeymlValidatorHandler struct {
@@ -43,9 +44,7 @@ func (vh *PubliccodeymlValidatorHandler) Query(ctx *fiber.Ctx) error {
 	// }
 
 	if len(ctx.Body()) == 0 {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "empty body",
-		})
+		return common.Error(fiber.StatusBadRequest, "empty body", "need a body to validate")
 	}
 
 	results := make(publiccodeParser.ValidationResults, 0)
