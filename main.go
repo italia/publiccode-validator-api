@@ -3,16 +3,19 @@ package main
 import (
 	"log"
 	"os"
-	"time"
 
 	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/caarlos0/env/v6"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/italia/publiccode-validator-api/internal/common"
 	"github.com/italia/publiccode-validator-api/internal/handlers"
 	"github.com/italia/publiccode-validator-api/internal/jsondecoder"
+)
+
+var (
+	Version = "dev"    //nolint:gochecknoglobals // We need this to be set at build
+	Commit  = "<none>" //nolint:gochecknoglobals // We need this to be set at build
 )
 
 func main() {
@@ -40,19 +43,6 @@ func Setup() *fiber.App {
 	// Automatically recover panics in handlers
 	app.Use(recover.New())
 
-	app.Use(cache.New(cache.Config{
-		Next: func(ctx *fiber.Ctx) bool {
-			// Don't cache /status
-			return ctx.Route().Path == "/v1/status"
-		},
-		Methods:      []string{fiber.MethodGet, fiber.MethodHead},
-		CacheControl: true,
-		Expiration:   10 * time.Second, //nolint:gomnd
-		KeyGenerator: func(ctx *fiber.Ctx) string {
-			return ctx.Path() + string(ctx.Context().QueryArgs().QueryString())
-		},
-	}))
-
 	prometheus := fiberprometheus.New(os.Args[0])
 	prometheus.RegisterAt(app, "/metrics")
 	app.Use(prometheus.Middleware)
@@ -64,8 +54,10 @@ func Setup() *fiber.App {
 
 func setupHandlers(app *fiber.App) {
 	validateHandler := handlers.NewPubliccodeymlValidatorHandler()
+	statusHandler := handlers.NewStatus(Version, Commit)
 
 	v1 := app.Group("/v1")
 
+	v1.Get("/status", statusHandler.GetStatus)
 	v1.Add("QUERY", "/validate", validateHandler.Query)
 }
