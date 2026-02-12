@@ -30,7 +30,7 @@ type TestCase struct {
 	expectedCode        int
 	expectedBody        string
 	expectedContentType string
-	validateFunc        func(t *testing.T, response map[string]interface{})
+	validateFunc        func(t *testing.T, response map[string]any)
 }
 
 func init() {
@@ -85,7 +85,7 @@ func runTestCases(t *testing.T, tests []TestCase) {
 			assert.Nil(t, err)
 
 			if test.validateFunc != nil {
-				var bodyMap map[string]interface{}
+				var bodyMap map[string]any
 				err = json.Unmarshal(body, &bodyMap)
 				assert.Nil(t, err)
 
@@ -121,9 +121,9 @@ func TestStatusEndpoints(t *testing.T) {
 	tests := []TestCase{
 		{
 			query:               "GET /v1/status",
-			expectedCode:        204,
-			expectedBody:        "",
-			expectedContentType: "",
+			expectedCode:        200,
+			expectedBody:        `{"v":"dev","commit":"-"}`,
+			expectedContentType: "application/json",
 			// TODO: test cache headers
 		},
 	}

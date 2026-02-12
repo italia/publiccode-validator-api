@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	Version = "dev"    //nolint:gochecknoglobals // We need this to be set at build
-	Commit  = "<none>" //nolint:gochecknoglobals // We need this to be set at build
+	Version = "dev" //nolint:gochecknoglobals // We need this to be set at build
+	Commit  = "-"   //nolint:gochecknoglobals // We need this to be set at build
 )
 
 func main() {
