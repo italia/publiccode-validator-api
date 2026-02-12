@@ -5,7 +5,6 @@ go 1.24.0
 require (
 	github.com/ansrivas/fiberprometheus/v2 v2.16.0
 	github.com/caarlos0/env/v6 v6.10.1
-	github.com/go-playground/validator/v10 v10.30.1
 	github.com/gofiber/fiber/v2 v2.52.11
 	github.com/italia/publiccode-parser-go/v5 v5.2.3
 	github.com/stretchr/testify v1.11.1
@@ -23,6 +22,7 @@ require (
 	github.com/github/go-spdx/v2 v2.3.3 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
+	github.com/go-playground/validator/v10 v10.30.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/italia/httpclient-lib-go v0.0.2 // indirect
 	github.com/klauspost/compress v1.18.2 // indirect
@@ -31,7 +31,6 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/philhofer/fwd v1.1.3-0.20240916144458-20a13a1f6b7c // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
@@ -39,7 +38,6 @@ require (
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sirupsen/logrus v1.9.1 // indirect
-	github.com/tinylib/msgp v1.2.5 // indirect
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.69.0 // indirect
