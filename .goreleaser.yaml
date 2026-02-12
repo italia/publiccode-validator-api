@@ -11,6 +11,8 @@ builds:
       - CGO_ENABLED=0
     ldflags:
       - -s -w
+      - -X main.Version={{.Version}}
+      - -X main.Commit={{.ShortCommit}}
     goos:
       - linux
 archives:
