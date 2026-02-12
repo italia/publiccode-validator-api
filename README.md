@@ -1,4 +1,4 @@
-# publiccode.yml web validator for Go
+# publiccode.yml RESTful validator API
 
 [![Join the #publiccode channel](https://img.shields.io/badge/Slack%20channel-%23publiccode-blue.svg?logo=slack)](https://developersitalia.slack.com/messages/CAM3F785T)
 [![Get invited](https://slack.developers.italia.it/badge.svg)](https://slack.developers.italia.it/)
@@ -9,19 +9,60 @@ library.
 
 ## Usage
 
-```bash
+```console
 go run main.go
+```
 
-curl -X POST "http://localhost:3000/v1/validate"
-  -H "Content-Type: application/x-yaml"
-  --data-binary "@./publiccode.yml"
+### Validate a publiccode.yml file
+
+```console
+curl -X QUERY "http://localhost:3000/v1/validate" -H "Content-Type: application/yaml" --data-binary "@./publiccode.yml"
+```
+
+or
+
+```console
+curl -X QUERY "http://localhost:3000/v1/validate" -H "Content-Type: application/yaml" \
+--data-binary $'publiccodeYmlVersion: "0.5"\ndevelopmentStatus: stable\n [... rest of the data ...]'
+```
+
+### Example response (valid publiccode.yml)
+
+```json
+{
+  "valid": true,
+  "results": []
+}
+```
+
+### Example response (with errors / warnings)
+
+```json
+{
+  "valid": false,
+  "results": [
+    {
+      "type": "error",
+      "key": "legal.license",
+      "description": "license must be a valid license (see https://spdx.org/licenses)",
+      "line": 12,
+      "column": 5
+    },
+    {
+      "type": "warning",
+      "key": "publiccodeYmlVersion",
+      "description": "v0.2 is not the latest version, use '0'. Parsing this file as v0.5",
+      "line": 1,
+      "column": 1
+    }
+  ]
+}
 ```
 
 ## Contributing
 
-Contributing is always appreciated.
+Contributing is always appreciated, see [CONTRIBUTING.md](CONTRIBUTING.md).
 Feel free to open issues, fork or submit a Pull Request.
-If you want to know more about how to add new fields, check out [CONTRIBUTING.md](CONTRIBUTING.md). In order to support other country-specific extensions in addition to Italy some refactoring might be needed.
 
 ## Maintainers
 
