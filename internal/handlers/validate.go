@@ -29,6 +29,8 @@ func NewPubliccodeymlValidatorHandler() *PubliccodeymlValidatorHandler {
 }
 
 func (vh *PubliccodeymlValidatorHandler) Query(ctx *fiber.Ctx) error {
+	var normalized *string
+
 	valid := true
 	parser := vh.parser
 
@@ -51,7 +53,7 @@ func (vh *PubliccodeymlValidatorHandler) Query(ctx *fiber.Ctx) error {
 
 	reader := bytes.NewReader(ctx.Body())
 
-	_, err := parser.ParseStream(reader)
+	parsed, err := parser.ParseStream(reader)
 	if err != nil {
 		var validationResults publiccodeParser.ValidationResults
 		if errors.As(err, &validationResults) {
@@ -66,5 +68,13 @@ func (vh *PubliccodeymlValidatorHandler) Query(ctx *fiber.Ctx) error {
 		}
 	}
 
-	return ctx.JSON(fiber.Map{"valid": valid, "results": results})
+	if valid && parsed != nil {
+		yaml, err := parsed.ToYAML()
+		if err == nil {
+			s := string(yaml)
+			normalized = &s
+		}
+	}
+
+	return ctx.JSON(fiber.Map{"valid": valid, "results": results, "normalized": normalized})
 }
