@@ -16,14 +16,14 @@ go run main.go
 ### Validate a publiccode.yml file
 
 ```console
-curl -X QUERY "http://localhost:3000/v1/validate" -H "Content-Type: application/yaml" --data-binary "@./publiccode.yml"
+curl -X QUERY "http://localhost:3000/v1/validate" --data-binary "@./publiccode.yml"
 ```
 
 or
 
 ```console
-curl -X QUERY "http://localhost:3000/v1/validate" -H "Content-Type: application/yaml" \
---data-binary $'publiccodeYmlVersion: "0.5"\ndevelopmentStatus: stable\n [... rest of the data ...]'
+curl -X QUERY "http://localhost:3000/v1/validate" \
+--data-binary $'publiccodeYmlVersion: "0.5"\ndevelopmentStatus: stable\n [...]\n'
 ```
 
 ### Example response (valid publiccode.yml)

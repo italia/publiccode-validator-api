@@ -38,13 +38,6 @@ func (vh *PubliccodeymlValidatorHandler) Query(ctx *fiber.Ctx) error {
 		parser = vh.parserExternalChecks
 	}
 
-	// ct := c.Get("Content-Type")
-	// if !strings.Contains(ct, "yaml") && ct != "application/octet-stream" {
-	// 	return c.Status(fiber.StatusUnsupportedMediaType).JSON(fiber.Map{
-	// 		"error": "unsupported content-type",
-	// 	})
-	// }
-
 	if len(ctx.Body()) == 0 {
 		return common.Error(fiber.StatusBadRequest, "empty body", "need a body to validate")
 	}
