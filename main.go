@@ -44,7 +44,9 @@ func Setup() *fiber.App {
 	// Automatically recover panics in handlers
 	app.Use(recover.New())
 
-	app.Use(cors.New())
+	app.Use(cors.New(cors.Config{
+		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH,QUERY",
+	}))
 
 	prometheus := fiberprometheus.New(os.Args[0])
 	prometheus.RegisterAt(app, "/metrics")
