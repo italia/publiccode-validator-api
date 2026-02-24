@@ -7,6 +7,7 @@ import (
 	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/caarlos0/env/v6"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/italia/publiccode-validator-api/internal/common"
 	"github.com/italia/publiccode-validator-api/internal/handlers"
@@ -42,6 +43,8 @@ func Setup() *fiber.App {
 
 	// Automatically recover panics in handlers
 	app.Use(recover.New())
+
+	app.Use(cors.New())
 
 	prometheus := fiberprometheus.New(os.Args[0])
 	prometheus.RegisterAt(app, "/metrics")
