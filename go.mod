@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/ansrivas/fiberprometheus/v2 v2.16.0
 	github.com/caarlos0/env/v6 v6.10.1
-	github.com/gofiber/fiber/v2 v2.52.11
+	github.com/gofiber/fiber/v2 v2.52.12
 	github.com/italia/publiccode-parser-go/v5 v5.2.3
 	github.com/stretchr/testify v1.11.1
 )
