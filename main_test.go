@@ -46,6 +46,15 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+func loadTestdata(t *testing.T, name string) string {
+	t.Helper()
+	b, err := os.ReadFile("testdata/" + name)
+	if err != nil {
+		t.Fatalf("cannot read testdata/%s: %v", name, err)
+	}
+	return string(b)
+}
+
 func runTestCases(t *testing.T, tests []TestCase) {
 	for _, test := range tests {
 		description := test.description
@@ -111,6 +120,52 @@ func TestApi(t *testing.T) {
 			expectedCode:        404,
 			expectedBody:        `{"title":"Not Found","detail":"Not Found","status":404}`,
 			expectedContentType: "application/problem+json",
+		},
+	}
+
+	runTestCases(t, tests)
+}
+
+func TestValidateEndpoint(t *testing.T) {
+	validYml := loadTestdata(t, "valid.publiccode.yml")
+	invalidYml := loadTestdata(t, "invalid.publiccode.yml")
+
+	tests := []TestCase{
+		{
+			description:         "validate: empty body",
+			query:               "QUERY /v1/validate",
+			body:                "",
+			expectedCode:        400,
+			expectedBody:        `{"title":"empty body","detail":"need a body to validate","status":400}`,
+			expectedContentType: "application/problem+json",
+		},
+		{
+			description:         "validate: valid file",
+			query:               "QUERY /v1/validate",
+			body:                validYml,
+			expectedCode:        200,
+			expectedContentType: "application/json; charset=utf-8",
+			validateFunc: func(t *testing.T, response map[string]any) {
+				assert.Equal(t, true, response["valid"])
+				results, ok := response["results"].([]any)
+				assert.True(t, ok)
+				assert.Len(t, results, 0)
+				assert.NotNil(t, response["normalized"])
+			},
+		},
+		{
+			description:         "validate: invalid file",
+			query:               "QUERY /v1/validate",
+			body:                invalidYml,
+			expectedCode:        200,
+			expectedContentType: "application/json; charset=utf-8",
+			validateFunc: func(t *testing.T, response map[string]any) {
+				assert.Equal(t, false, response["valid"])
+				results, ok := response["results"].([]any)
+				assert.True(t, ok)
+				assert.NotEmpty(t, results)
+				assert.Nil(t, response["normalized"])
+			},
 		},
 	}
 
