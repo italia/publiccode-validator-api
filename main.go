@@ -2,13 +2,11 @@ package main
 
 import (
 	"log"
-	"os"
 
-	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/caarlos0/env/v6"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/cors"
+	"github.com/gofiber/fiber/v3/middleware/recover"
 	"github.com/italia/publiccode-validator-api/internal/common"
 	"github.com/italia/publiccode-validator-api/internal/handlers"
 	"github.com/italia/publiccode-validator-api/internal/jsondecoder"
@@ -45,12 +43,8 @@ func Setup() *fiber.App {
 	app.Use(recover.New())
 
 	app.Use(cors.New(cors.Config{
-		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH,QUERY",
+		AllowMethods: []string{"GET", "POST", "HEAD", "PUT", "DELETE", "PATCH", "QUERY"},
 	}))
-
-	prometheus := fiberprometheus.New(os.Args[0])
-	prometheus.RegisterAt(app, "/metrics")
-	app.Use(prometheus.Middleware)
 
 	setupHandlers(app)
 
@@ -64,6 +58,6 @@ func setupHandlers(app *fiber.App) {
 	v1 := app.Group("/v1")
 
 	v1.Get("/status", statusHandler.GetStatus)
-	v1.Add("QUERY", "/validate", validateHandler.Query)
-	v1.Add("POST", "/validate", validateHandler.Query)
+	v1.Add([]string{"QUERY"}, "/validate", validateHandler.Query)
+	v1.Add([]string{"POST"}, "/validate", validateHandler.Query)
 }

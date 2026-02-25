@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 type Status struct {
@@ -14,8 +14,9 @@ func NewStatus(version string, commit string) *Status {
 }
 
 // GetStatus gets status of the API.
-func (s *Status) GetStatus(ctx *fiber.Ctx) error {
+func (s *Status) GetStatus(ctx fiber.Ctx) error {
 	ctx.Append("Cache-Control", "no-cache")
 
+	//nolint:wrapcheck
 	return ctx.Status(fiber.StatusOK).JSON(s)
 }
