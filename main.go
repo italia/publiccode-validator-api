@@ -65,4 +65,5 @@ func setupHandlers(app *fiber.App) {
 
 	v1.Get("/status", statusHandler.GetStatus)
 	v1.Add("QUERY", "/validate", validateHandler.Query)
+	v1.Add("POST", "/validate", validateHandler.Query)
 }
