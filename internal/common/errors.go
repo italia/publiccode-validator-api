@@ -3,7 +3,7 @@ package common
 import (
 	"errors"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 func InternalServerError(title string) ProblemJSONError {
@@ -14,7 +14,7 @@ func Error(status int, title string, detail string) ProblemJSONError {
 	return ProblemJSONError{Title: title, Detail: detail, Status: status}
 }
 
-func CustomErrorHandler(ctx *fiber.Ctx, err error) error {
+func CustomErrorHandler(ctx fiber.Ctx, err error) error {
 	var problemJSON *ProblemJSONError
 
 	// Retrieve the custom status code if it's a fiber.*Error
@@ -35,5 +35,6 @@ func CustomErrorHandler(ctx *fiber.Ctx, err error) error {
 
 	ctx.Status(problemJSON.Status)
 
+	//nolint:wrapcheck
 	return ctx.JSON(problemJSON, "application/problem+json")
 }

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	publiccodeParser "github.com/italia/publiccode-parser-go/v5"
 	"github.com/italia/publiccode-validator-api/internal/common"
 )
@@ -28,13 +28,13 @@ func NewPubliccodeymlValidatorHandler() *PubliccodeymlValidatorHandler {
 	return &PubliccodeymlValidatorHandler{parser: parser, parserExternalChecks: parserExternalChecks}
 }
 
-func (vh *PubliccodeymlValidatorHandler) Query(ctx *fiber.Ctx) error {
+func (vh *PubliccodeymlValidatorHandler) Query(ctx fiber.Ctx) error {
 	var normalized *string
 
 	valid := true
 	parser := vh.parser
 
-	if checks := ctx.QueryBool("external-checks", false); checks {
+	if checks := fiber.Query[bool](ctx, "external-checks", false); checks {
 		parser = vh.parserExternalChecks
 	}
 
@@ -69,5 +69,6 @@ func (vh *PubliccodeymlValidatorHandler) Query(ctx *fiber.Ctx) error {
 		}
 	}
 
+	//nolint:wrapcheck
 	return ctx.JSON(fiber.Map{"valid": valid, "results": results, "normalized": normalized})
 }

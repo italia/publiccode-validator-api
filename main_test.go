@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -75,7 +75,7 @@ func runTestCases(t *testing.T, tests []TestCase) {
 			}
 			req.URL.RawQuery = u.Query().Encode()
 
-			res, err := app.Test(req, -1)
+			res, err := app.Test(req, fiber.TestConfig{Timeout: 0, FailOnTimeout: false})
 			assert.Nil(t, err)
 
 			assert.Equal(t, test.expectedCode, res.StatusCode)
@@ -109,7 +109,7 @@ func TestApi(t *testing.T) {
 			query:       "GET /v1/i-dont-exist",
 
 			expectedCode:        404,
-			expectedBody:        `{"title":"Not Found","detail":"Cannot GET /v1/i-dont-exist","status":404}`,
+			expectedBody:        `{"title":"Not Found","detail":"Not Found","status":404}`,
 			expectedContentType: "application/problem+json",
 		},
 	}
@@ -123,7 +123,7 @@ func TestStatusEndpoints(t *testing.T) {
 			query:               "GET /v1/status",
 			expectedCode:        200,
 			expectedBody:        `{"v":"dev","commit":"-"}`,
-			expectedContentType: "application/json",
+			expectedContentType: "application/json; charset=utf-8",
 			// TODO: test cache headers
 		},
 	}
