@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"strings"
@@ -129,6 +130,23 @@ func TestApi(t *testing.T) {
 func TestValidateEndpoint(t *testing.T) {
 	validYml := loadTestdata(t, "valid.publiccode.yml")
 	invalidYml := loadTestdata(t, "invalid.publiccode.yml")
+	sourceServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/valid.publiccode.yml":
+			_, _ = w.Write([]byte(validYml))
+		case "/invalid.publiccode.yml":
+			_, _ = w.Write([]byte(invalidYml))
+		case "/empty.publiccode.yml":
+			// Return 200 with an empty response body
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer sourceServer.Close()
+
+	validYmlURL := url.QueryEscape(sourceServer.URL + "/valid.publiccode.yml")
+	emptyYmlURL := url.QueryEscape(sourceServer.URL + "/empty.publiccode.yml")
+	notFoundYmlURL := url.QueryEscape(sourceServer.URL + "/missing.publiccode.yml")
 
 	tests := []TestCase{
 		{
@@ -166,6 +184,40 @@ func TestValidateEndpoint(t *testing.T) {
 				assert.NotEmpty(t, results)
 				assert.Nil(t, response["normalized"])
 			},
+		},
+		{
+			description:         "validate: valid file from URL query parameter",
+			query:               "QUERY /v1/validate?url=" + validYmlURL,
+			expectedCode:        200,
+			expectedContentType: "application/json; charset=utf-8",
+			validateFunc: func(t *testing.T, response map[string]any) {
+				assert.Equal(t, true, response["valid"])
+				results, ok := response["results"].([]any)
+				assert.True(t, ok)
+				assert.Len(t, results, 0)
+				assert.NotNil(t, response["normalized"])
+			},
+		},
+		{
+			description:         "validate: invalid URL query parameter",
+			query:               "QUERY /v1/validate?url=not-a-url",
+			expectedCode:        400,
+			expectedBody:        `{"title":"invalid url","detail":"query parameter 'url' must be a valid http(s) URL","status":400}`,
+			expectedContentType: "application/problem+json",
+		},
+		{
+			description:         "validate: URL query parameter returns empty body",
+			query:               "QUERY /v1/validate?url=" + emptyYmlURL,
+			expectedCode:        400,
+			expectedBody:        `{"title":"empty body","detail":"the URL response is empty","status":400}`,
+			expectedContentType: "application/problem+json",
+		},
+		{
+			description:         "validate: URL query parameter returns non-2xx",
+			query:               "QUERY /v1/validate?url=" + notFoundYmlURL,
+			expectedCode:        400,
+			expectedBody:        `{"title":"url fetch failed","detail":"failed to fetch URL: HTTP 404","status":400}`,
+			expectedContentType: "application/problem+json",
 		},
 	}
 
