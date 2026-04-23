@@ -26,6 +26,13 @@ curl -X QUERY "http://localhost:3000/v1/validate" \
 --data-binary $'publiccodeYmlVersion: "0.5"\ndevelopmentStatus: stable\n [...]\n'
 ```
 
+or by URL query parameter:
+
+```console
+curl -G -X QUERY "http://localhost:3000/v1/validate" \
+--data-urlencode "url=https://example.com/publiccode.yml"
+```
+
 ### Example response (valid publiccode.yml)
 
 ```json
