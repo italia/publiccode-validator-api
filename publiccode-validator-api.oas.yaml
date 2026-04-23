@@ -1,0 +1,172 @@
+openapi: 3.1.0
+info:
+  title: publiccode-validator-api
+  version: dev
+  description: >
+    REST API to validate and normalize publiccode.yml files
+    against the official standard.
+
+
+    The `/validate` endpoint accepts both `POST` and the `QUERY`
+    HTTP method (RFC 9110) with a publiccode.yml body and returns
+    validation results plus a normalized version of the file.
+  license:
+    name: AGPL-3.0
+    identifier: AGPL-3.0-only
+  contact:
+    url: "https://github.com/italia/publiccode-validator-api"
+
+servers:
+  - url: /v1
+
+paths:
+  /status:
+    get:
+      operationId: getStatus
+      summary: Get API status
+      tags: [status]
+      responses:
+        "200":
+          description: OK
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              example: no-cache
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+              example:
+                v: "1.0.0"
+                commit: "abc1234"
+
+  /validate:
+    post:
+      operationId: validatePubliccode
+      summary: Validate a publiccode.yml file
+      description: >
+        Parses and validates the publiccode.yml file in the request body.
+        Returns whether the file is valid, a list of validation issues,
+        and a normalized version of the file if valid.
+
+
+        The same endpoint also accepts the `QUERY` HTTP method.
+      tags: [validation]
+      parameters:
+        - name: external-checks
+          in: query
+          required: false
+          description: >
+            Enable external checks such as URL reachability.
+            Disabled by default for performance.
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: true
+        content:
+          application/yaml:
+            schema:
+              type: string
+            example: |
+              publiccodeYmlVersion: "0.3"
+              name: My Software
+              url: "https://example.com/repo"
+      responses:
+        "200":
+          description: Validation result (regardless of whether the file is valid)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationResponse"
+              examples:
+                valid:
+                  summary: Valid file
+                  value:
+                    valid: true
+                    results: []
+                    normalized: "publiccodeYmlVersion: \"0.3\"\nname: My Software\n"
+                invalid:
+                  summary: Invalid file
+                  value:
+                    valid: false
+                    results:
+                      - key: publiccodeYmlVersion
+                        description: "missing required field"
+                    normalized: null
+        "400":
+          description: Bad request (e.g. empty body)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJSON"
+              example:
+                title: empty body
+                detail: need a body to validate
+                status: 400
+        "404":
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemJSON"
+              example:
+                title: Not Found
+                detail: Not Found
+                status: 404
+
+components:
+  schemas:
+    Status:
+      type: object
+      required: [v, commit]
+      properties:
+        v:
+          type: string
+          description: API version
+          example: "1.0.0"
+        commit:
+          type: string
+          description: Git commit hash
+          example: "abc1234"
+
+    ValidationResponse:
+      type: object
+      required: [valid, results]
+      properties:
+        valid:
+          type: boolean
+          description: Whether the file passed validation with no errors
+        results:
+          type: array
+          description: List of validation issues (warnings and errors)
+          items:
+            type: object
+            description: A validation issue
+            additionalProperties: true
+        normalized:
+          description: >
+            Normalized publiccode.yml content, present only when
+            the file is valid.
+          oneOf:
+            - type: string
+            - type: "null"
+
+    ProblemJSON:
+      description: Error response following RFC 9457 (Problem Details for HTTP APIs)
+      type: object
+      required: [title, status]
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code
+        title:
+          type: string
+          description: Short human-readable summary
+        detail:
+          type: string
+          description: Human-readable explanation
+        status:
+          type: integer
+          description: HTTP status code
