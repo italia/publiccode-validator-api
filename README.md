@@ -7,6 +7,12 @@ A RESTful API for validating [publiccode.yml](https://github.com/italia/publicco
 files, using the [publiccode-parser-go](https://github.com/italia/publiccode-parser-go)
 library.
 
+## API reference
+
+The OpenAPI spec is in [`publiccode-validator-api.oas.yaml`](publiccode-validator-api.oas.yaml).
+
+[Browse the interactive Swagger UI preview](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/italia/publiccode-validator-api/main/publiccode-validator-api.oas.yaml)
+
 ## Usage
 
 ```console
