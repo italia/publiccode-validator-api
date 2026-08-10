@@ -5,19 +5,19 @@ go 1.25.0
 require (
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/gofiber/fiber/v3 v3.4.0
-	github.com/italia/publiccode-parser-go/v5 v5.3.1
+	github.com/italia/publiccode-parser-go/v5 v5.4.3
 	github.com/stretchr/testify v1.11.1
 )
 
 require (
-	github.com/alranel/go-vcsurl/v2 v2.1.0 // indirect
+	github.com/alranel/go-vcsurl/v2 v2.1.1 // indirect
 	github.com/andybalholm/brotli v1.2.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.12 // indirect
-	github.com/github/go-spdx/v2 v2.3.3 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
+	github.com/github/go-spdx/v2 v2.7.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.30.1 // indirect
+	github.com/go-playground/validator/v10 v10.30.3 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
 	github.com/gofiber/schema v1.8.0 // indirect
 	github.com/gofiber/utils/v2 v2.1.1 // indirect
