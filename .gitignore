@@ -5,3 +5,5 @@ tmp/
 
 # Compiled binary
 /publiccode-validator-api
+
+.env
