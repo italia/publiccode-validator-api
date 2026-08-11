@@ -19,9 +19,11 @@ jobs:
         with:
           # All history, required for goreleaser
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
+          cache: false
       - # For TagBody, TagSubject or TagContents fields in goreleaser's templates
         run: git fetch --force --tags
       - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
