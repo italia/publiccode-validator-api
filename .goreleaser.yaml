@@ -17,6 +17,9 @@ builds:
       - linux
 archives:
   - formats: [tar.gz]
+sboms:
+  - artifacts: archive
+
 checksum:
   name_template: "checksums.txt"
 snapshot:
