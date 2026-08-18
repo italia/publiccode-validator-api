@@ -6,13 +6,12 @@ require (
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/gofiber/fiber/v3 v3.4.0
 	github.com/italia/publiccode-parser-go/v5 v5.4.3
-	github.com/stretchr/testify v1.11.1
+	github.com/stretchr/testify v1.12.0
 )
 
 require (
 	github.com/alranel/go-vcsurl/v2 v2.1.1 // indirect
 	github.com/andybalholm/brotli v1.2.2 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
 	github.com/github/go-spdx/v2 v2.7.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -29,7 +28,6 @@ require (
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/sirupsen/logrus v1.9.1 // indirect
