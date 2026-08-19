@@ -94,4 +94,4 @@ formatters:
     paths:
       - third_party$
       - builtin$
-      - examples$ # fast: true
+      - examples$
