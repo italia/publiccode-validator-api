@@ -10,7 +10,7 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - -s -w
+      - -s -w -buildid=
       - -X main.Version={{.Version}}
       - -X main.Commit={{.ShortCommit}}
     goos:

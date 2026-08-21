@@ -34,7 +34,7 @@ jobs:
           cd /tmp/src-elsewhere
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOAMD64=v1 \
             go build -trimpath \
-              -ldflags="-s -w -X main.Version=$VERSION -X main.Commit=$COMMIT" \
+              -ldflags="-s -w -buildid= -X main.Version=$VERSION -X main.Commit=$COMMIT" \
               -o /tmp/plain-build .
           sha256sum /tmp/goreleaser-build /tmp/plain-build
           cmp /tmp/goreleaser-build /tmp/plain-build \
