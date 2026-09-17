@@ -30,7 +30,7 @@ jobs:
       - # For TagBody, TagSubject or TagContents fields in goreleaser's templates
         run: git fetch --force --tags
       - # goreleaser shells out to syft for the sboms stanza
-        uses: anchore/sbom-action/download-syft@aa80c8c5bd439a416a62804f2151ab38c671a638 # v0.24.1
+        uses: anchore/sbom-action/download-syft@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
       - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
           registry: ghcr.io
